@@ -1,0 +1,4 @@
+[console_scripts]
+bytetrack = track.bytetrack:main
+track_point_sub = track.track_point_sub:main
+
