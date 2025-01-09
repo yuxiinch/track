@@ -109,51 +109,60 @@ def depth(pipeline, depth_image, track_id,x,y,w,h,window_size=5):
 
     return X, Y, filtered_x, filtered_y, smoothed_depth
 
-class YoloTracker:
-    def __init__(self):
-        self.visualization_initialized = False
-        self.fig, self.ax = plt.subplots() #用 Matplotlib 建立窗口
+# class YoloTracker:
+#     def __init__(self):
+#         self.visualization_initialized = False
+#         self.fig, self.ax = plt.subplots() #用 Matplotlib 建立窗口
         
-    def visualize(self, raw_x, raw_y, smooth_x, smooth_y, z, locked_id):
-        if not self.visualization_initialized:
-            self.ax.set_xlim(0, 2000)
-            self.ax.set_ylim(-1000, 1000)
-            self.ax.set_title("RealSense Relative Position (XYZ)")
-            self.ax.set_xlabel("Y (mm)")
-            self.ax.set_ylabel("X (mm)")
-            self.ax.grid(True)
-            self.visualization_initialized = True
+#     def visualize(self, raw_x, raw_y, smooth_x, smooth_y, z, locked_id):
+#         if not self.visualization_initialized:
+#             self.ax.set_xlim(0, 2000)
+#             self.ax.set_ylim(-1000, 1000)
+#             self.ax.set_title("RealSense Relative Position (XYZ)")
+#             self.ax.set_xlabel("Y (mm)")
+#             self.ax.set_ylabel("X (mm)")
+#             self.ax.grid(True)
+#             self.visualization_initialized = True
 
-        self.ax.clear()
-        self.ax.set_xlim(0, 2000)
-        self.ax.set_ylim(-1000, 1000)
+#         self.ax.clear()
+#         self.ax.set_xlim(0, 2000)
+#         self.ax.set_ylim(-1000, 1000)
 
-        if locked_id is not None:
-            self.ax.scatter(smooth_y, smooth_x, color='red', label=f"Locked ID {locked_id}", s=150, alpha=0.8)
-            self.ax.text(smooth_y, smooth_x, f"ID {locked_id}\nZ: {z:.1f} mm", fontsize=10, ha='left', color='red')
+#         if locked_id is not None:
+#             self.ax.scatter(smooth_y, smooth_x, color='red', label=f"Locked ID {locked_id}", s=150, alpha=0.8)
+#             self.ax.text(smooth_y, smooth_x, f"ID {locked_id}\nZ: {z:.1f} mm", fontsize=10, ha='left', color='red')
 
-        sensor_positions = {
-            0: (0,0)
-        }
-        for sensor_id, (sx, sy) in sensor_positions.items():
-            self.ax.scatter(sy, sx, color='blue', label=f"Sensor {sensor_id}", s=100)
-            self.ax.text(sy, sx, f"Sensor {sensor_id}\n({sy:.1f}, {sx:.1f})", fontsize=10, ha='center', va='bottom')
-        self.ax.legend()
-        plt.pause(0.01)
+#         sensor_positions = {
+#             0: (0,0)
+#         }
+#         for sensor_id, (sx, sy) in sensor_positions.items():
+#             self.ax.scatter(sy, sx, color='blue', label=f"Sensor {sensor_id}", s=100)
+#             self.ax.text(sy, sx, f"Sensor {sensor_id}\n({sy:.1f}, {sx:.1f})", fontsize=10, ha='center', va='bottom')
+#         self.ax.legend()
+#         plt.pause(0.01)
 
 def yolo_track(args):
     tracker = BYTETracker(args)
     locked_target = None 
     closest_target = None
-    yolo_tracker = YoloTracker() 
+    # yolo_tracker = YoloTracker() 
 
     if args.realsense:
-        reset_realsense_devices()
         pipeline = rs.pipeline()
         config = rs.config()
         config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
         config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-        pipeline.start(config)
+        try:
+            pipeline.start(config)
+        except RuntimeError:
+            print("Pipeline failed to start, resetting devices.")
+            reset_realsense_devices()
+            pipeline = rs.pipeline()
+            config = rs.config()
+            config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+            config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+            pipeline.start(config)
+
     elif args.video_path:
         cap = cv2.VideoCapture(args.video_path)
     else:
@@ -200,10 +209,10 @@ def yolo_track(args):
             if locked_target is not None and track_id == locked_target.track_id:
                 measured_x, measured_y, filtered_x, filtered_y, z_person = depth(pipeline, depth_image, track_id,x,y,w,h)
                 
-                if measured_x is not None and measured_y is not None:
-                    yolo_tracker.visualize(measured_x, measured_y, filtered_x, filtered_y, z_person, locked_target.track_id)
-                cv2.rectangle(frame, (int(x), int(y)), (int(x + w), int(y + h)), (0, 0, 255), 2)
-                cv2.putText(frame, f"Locked ID: {track_id}", (int(x), int(y - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                # if measured_x is not None and measured_y is not None:
+                #     YoloTracker.visualize(measured_x, measured_y, filtered_x, filtered_y, z_person, locked_target.track_id)
+                # cv2.rectangle(frame, (int(x), int(y)), (int(x + w), int(y + h)), (0, 0, 255), 2)
+                # cv2.putText(frame, f"Locked ID: {track_id}", (int(x), int(y - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
         # 显示视频
         cv2.imshow("YOLOv8 Tracking", frame)
