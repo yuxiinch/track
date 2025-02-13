@@ -1,0 +1,25 @@
+running egg_info
+writing build/track/track.egg-info/PKG-INFO
+writing dependency_links to build/track/track.egg-info/dependency_links.txt
+writing entry points to build/track/track.egg-info/entry_points.txt
+writing requirements to build/track/track.egg-info/requires.txt
+writing top-level names to build/track/track.egg-info/top_level.txt
+reading manifest file 'build/track/track.egg-info/SOURCES.txt'
+writing manifest file 'build/track/track.egg-info/SOURCES.txt'
+running build
+running build_py
+copying track/depth.py -> /home/ros_dev/workspace/track/build/track/build/lib/track
+running install
+running install_lib
+copying /home/ros_dev/workspace/track/build/track/build/lib/track/depth.py -> /home/ros_dev/workspace/track/install/track/lib/python3.10/site-packages/track
+byte-compiling /home/ros_dev/workspace/track/install/track/lib/python3.10/site-packages/track/depth.py to depth.cpython-310.pyc
+running install_data
+running install_egg_info
+removing '/home/ros_dev/workspace/track/install/track/lib/python3.10/site-packages/track-0.0.0-py3.10.egg-info' (and everything under it)
+Copying build/track/track.egg-info to /home/ros_dev/workspace/track/install/track/lib/python3.10/site-packages/track-0.0.0-py3.10.egg-info
+running install_scripts
+Installing bytetrack script to /home/ros_dev/workspace/track/install/track/lib/track
+Installing test script to /home/ros_dev/workspace/track/install/track/lib/track
+Installing track_point_sub script to /home/ros_dev/workspace/track/install/track/lib/track
+Installing trans_depth script to /home/ros_dev/workspace/track/install/track/lib/track
+writing list of installed files to '/home/ros_dev/workspace/track/build/track/install.log'

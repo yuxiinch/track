@@ -1,0 +1,35 @@
+[0.453s] Invoking command in '/home/ros_dev/workspace/track': PYTHONPATH=/home/ros_dev/workspace/track/build/track/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/ros_dev/workspace/track/install/track/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base build/track build --build-base /home/ros_dev/workspace/track/build/track/build install --record /home/ros_dev/workspace/track/build/track/install.log --single-version-externally-managed install_data
+[0.602s] running egg_info
+[0.603s] writing build/track/track.egg-info/PKG-INFO
+[0.603s] writing dependency_links to build/track/track.egg-info/dependency_links.txt
+[0.603s] writing entry points to build/track/track.egg-info/entry_points.txt
+[0.603s] writing requirements to build/track/track.egg-info/requires.txt
+[0.603s] writing top-level names to build/track/track.egg-info/top_level.txt
+[0.605s] reading manifest file 'build/track/track.egg-info/SOURCES.txt'
+[0.610s] writing manifest file 'build/track/track.egg-info/SOURCES.txt'
+[0.610s] running build
+[0.610s] running build_py
+[0.610s] copying track/depth.py -> /home/ros_dev/workspace/track/build/track/build/lib/track
+[0.610s] copying track/bytetrack.py -> /home/ros_dev/workspace/track/build/track/build/lib/track
+[0.611s] running install
+[0.611s] running install_lib
+[0.611s] copying /home/ros_dev/workspace/track/build/track/build/lib/track/depth.py -> /home/ros_dev/workspace/track/install/track/lib/python3.10/site-packages/track
+[0.612s] copying /home/ros_dev/workspace/track/build/track/build/lib/track/bytetrack.py -> /home/ros_dev/workspace/track/install/track/lib/python3.10/site-packages/track
+[0.612s] byte-compiling /home/ros_dev/workspace/track/install/track/lib/python3.10/site-packages/track/depth.py to depth.cpython-310.pyc
+[0.613s]   File "/home/ros_dev/workspace/track/install/track/lib/python3.10/site-packages/track/depth.py", line 20
+[0.613s]     msg.data[:2] = 
+[0.613s]                    ^
+[0.613s] SyntaxError: invalid syntax
+[0.613s] 
+[0.613s] byte-compiling /home/ros_dev/workspace/track/install/track/lib/python3.10/site-packages/track/bytetrack.py to bytetrack.cpython-310.pyc
+[0.614s] running install_data
+[0.614s] running install_egg_info
+[0.616s] removing '/home/ros_dev/workspace/track/install/track/lib/python3.10/site-packages/track-0.0.0-py3.10.egg-info' (and everything under it)
+[0.616s] Copying build/track/track.egg-info to /home/ros_dev/workspace/track/install/track/lib/python3.10/site-packages/track-0.0.0-py3.10.egg-info
+[0.617s] running install_scripts
+[0.632s] Installing bytetrack script to /home/ros_dev/workspace/track/install/track/lib/track
+[0.632s] Installing test script to /home/ros_dev/workspace/track/install/track/lib/track
+[0.632s] Installing track_point_sub script to /home/ros_dev/workspace/track/install/track/lib/track
+[0.632s] Installing trans_depth script to /home/ros_dev/workspace/track/install/track/lib/track
+[0.632s] writing list of installed files to '/home/ros_dev/workspace/track/build/track/install.log'
+[0.649s] Invoked command in '/home/ros_dev/workspace/track' returned '0': PYTHONPATH=/home/ros_dev/workspace/track/build/track/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/ros_dev/workspace/track/install/track/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base build/track build --build-base /home/ros_dev/workspace/track/build/track/build install --record /home/ros_dev/workspace/track/build/track/install.log --single-version-externally-managed install_data
