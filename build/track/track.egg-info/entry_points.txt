@@ -1,6 +1,7 @@
 [console_scripts]
+byte_old = track.byte_old:main
 bytetrack = track.bytetrack:main
+open_rs = track.open_rs:main
 test = track.test:main
 track_point_sub = track.track_point_sub:main
-trans_depth = track.depth:main
 

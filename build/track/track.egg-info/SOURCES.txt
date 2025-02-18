@@ -158,12 +158,14 @@ test/test_pep257.py
 track/__init__.py
 track/basetrack.py
 track/best.pt
+track/byte_old.py
 track/byte_tracker.py
 track/bytetrack.py
 track/depth.py
 track/detect.py
 track/kalman_filter.py
 track/matching.py
+track/open_rs.py
 track/palace.mp4
 track/recognize.py
 track/test.py

@@ -21,9 +21,11 @@ setup(
     entry_points={
         'console_scripts': [
             'bytetrack = track.bytetrack:main',
+            'byte_old = track.byte_old:main',
             'test = track.test:main',
             'track_point_sub = track.track_point_sub:main',
-            'trans_depth = track.depth:main'
+            # 'trans_depth = track.depth:main'
+            'open_rs = track.open_rs:main'
         ],
     },
 )
