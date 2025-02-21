@@ -23,3 +23,4 @@ ByteTrack 目標追蹤：追蹤不同 ID 的目標
 ROS2 訂閱與發佈：從 RealSense 讀取影像並發佈追蹤結果 /people_track
 深度資訊計算：透過深度相機取得目標物的距離
 視覺化顯示：在畫面上標記追蹤的對象與 ID
+![image](https://github.com/user-attachments/assets/429db481-6f6d-4282-8508-e97589ff2f03)
