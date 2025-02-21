@@ -12,6 +12,9 @@
 pyrealsense2（RealSense SDK）
 opencv-python（影像處理）
 cv_bridge（ROS 影像訊息轉換）
+＝＝＝＝＝＝＝
+ros2 run track bytetrack --realsense
+＝＝＝＝＝＝＝
 
 
 **人物追蹤系統（YOLOv8 + ByteTrack + ROS2）**
@@ -23,4 +26,11 @@ ByteTrack 目標追蹤：追蹤不同 ID 的目標
 ROS2 訂閱與發佈：從 RealSense 讀取影像並發佈追蹤結果 /people_track
 深度資訊計算：透過深度相機取得目標物的距離
 視覺化顯示：在畫面上標記追蹤的對象與 ID
+＝＝＝＝＝＝＝
+ros2 run track open_rs
+＝＝＝＝＝＝＝
+
 ![image](https://github.com/user-attachments/assets/429db481-6f6d-4282-8508-e97589ff2f03)
+
+建議先開bytetracky再開open_rs，因為open_rs開啟後即會儲存鏡頭讀取之影片。
+
