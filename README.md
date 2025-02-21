@@ -14,7 +14,7 @@ opencv-python（影像處理）
 cv_bridge（ROS 影像訊息轉換）
 
 ### 執行程式
-#### 1. 使用 RealSense 相機作為輸入
+#### 使用 RealSense 相機作為輸入
 ```bash
 ros2 run track bytetrack --realsense
 ```
@@ -33,7 +33,7 @@ ROS2 訂閱與發佈：從 RealSense 讀取影像並發佈追蹤結果 /people_t
 視覺化顯示：在畫面上標記追蹤的對象與 ID
 
 ### 執行程式
-#### 1. 開啟bytetrack接收相機資訊
+#### 開啟bytetrack接收相機資訊
 ```bash
 ros2 run track open_rs
 ```
