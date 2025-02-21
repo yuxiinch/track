@@ -13,7 +13,11 @@ pyrealsense2（RealSense SDK）
 opencv-python（影像處理）
 cv_bridge（ROS 影像訊息轉換）
 
-**```bash ros2 run track bytetrack --realsense**
+### 執行程式
+#### 1. 使用 RealSense 相機作為輸入
+```bash
+ros2 run track bytetrack --realsense
+
 
 
 
