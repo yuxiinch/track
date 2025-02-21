@@ -32,7 +32,11 @@ ROS2 訂閱與發佈：從 RealSense 讀取影像並發佈追蹤結果 /people_t
 深度資訊計算：透過深度相機取得目標物的距離
 視覺化顯示：在畫面上標記追蹤的對象與 ID
 
+### 執行程式
+#### 1. 開啟bytetrack接收相機資訊
+```bash
 ros2 run track open_rs
+```
 
 ![image](https://github.com/user-attachments/assets/429db481-6f6d-4282-8508-e97589ff2f03)
 
