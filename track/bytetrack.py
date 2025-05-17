@@ -4,8 +4,10 @@
 import threading
 import rclpy
 from rclpy.node import Node
+from std_msgs.msg import String
 from std_msgs.msg import Int32MultiArray
 from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
 import cv2
 import numpy as np
 import torch
@@ -14,6 +16,7 @@ import argparse
 import os
 import time 
 from datetime import datetime 
+# import onnxruntime as ort
 
 # ByteTrack
 from track.byte_tracker import BYTETracker
@@ -25,7 +28,12 @@ from ultralytics import YOLO
 ###############################################################################
 # 請換成你自己訓練好的 YOLOv8 權重檔
 ###############################################################################
-MODEL_PATH = "/home/ros_dev/workspace/track/track/best.pt"
+
+# MODEL_PATH = "./src/track/track/best_old_l.engine"    #58-60
+MODEL_PATH = "/workspace/src/track/track/best_new_l.engine"    #60-63
+# MODEL_PATH = "./src/track/track/best_new_m.engine"    #76-80
+# MODEL_PATH = "./src/track/track/best_old_l.pt"
+# MODEL_PATH = "/home/ros_dev/workspace/track/track/best.pt"
 a=0
 
 
@@ -46,24 +54,60 @@ class PeopleTrackNode(Node):
     def __init__(self, args):
         super().__init__('PeopleTrackNode')
 
+        self.status = "UNLOCKED"
+        self.locked_target = None
+        self.x1, self.y1, self.x2, self.y2 = None, None, None, None
+        self.has_detection = False
+
+        self.bridge = CvBridge()
+        self.create_subscription(Image, '/camera/color', self.color_callback, 10)
+        self.color_image = None
+
+        self.pub_annotated_image = self.create_publisher(Image, '/annotated_image', 10)
+        self.pub_ocr_results = self.create_publisher(String, '/ocr_results', 10)
+        self.get_logger().info('people_track node is up and running!')
+
+        self.model = YOLO(MODEL_PATH)
+        # self.model = YOLO(MODEL_PATH,task = 'detect').to('cuda')
+        time.sleep(3)
+
+        self.tracker_args = args
+
+        self.yolo_thread = threading.Thread(target=self.yolo_track, daemon=True)
+        self.yolo_thread.start()
+
+    def color_callback(self, msg):
+        self.color_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+
+    def publish_annotated_image(self, frame):
+        if frame is not None:
+            img_msg = self.bridge.cv2_to_imgmsg(frame, encoding="bgr8")
+            self.pub_annotated_image.publish(img_msg)
+
+    def yolo_track(self):
+        tracker = BYTETracker(self.tracker_args)
         # ------------ 狀態 -------------
         self.status = "UNLOCKED"  # 文字狀態
         self.corner_points = None
         self.locked_target = None
         self.x1, self.y1, self.x2, self.y2 = None, None, None, None
-
         self.depth_value = 0  
         self.has_detection = False
 
         # ------------ ROS 相關 -------------
         self.pub_track_data = self.create_publisher(Int32MultiArray, 'people_track', 10)
         self.timer = self.create_timer(1.0, self.timer_callback)
-        # self.pub_depth_data = self.create_publisher(Int32MultiArray, '/depth', 10)
-        # self.pub_depth_data = self.create_publisher(Image, '/depth', 10)
+        self.color_image = None
+        self.depth_image = None
+        self.bridge = CvBridge()
+        self.create_subscription(Image, '/camera/color/yu', self.color_callback, 10)
+        self.create_subscription(Image, '/camera/depth', self.depth_callback, 10)
         self.get_logger().info('people_track node is up and running!')
 
         # ------------ YOLO 模型 -------------
-        self.model = YOLO(MODEL_PATH)
+        self.model = YOLO(MODEL_PATH,task = 'detect').to('cuda')
+        print(f"running at: {self.model.device}")
+        time.sleep(3)
 
         # 將 ByteTrack 參數也保存下來
         self.tracker_args = args
@@ -72,24 +116,6 @@ class PeopleTrackNode(Node):
         self.yolo_thread = threading.Thread(target=self.yolo_track, daemon=True)
         self.yolo_thread.start()
 
-        #------------- 影片保存相關初始化------------
-        output_dir = "output_videos"
-        ori_output_dir = "original_vide"
-        os.makedirs(output_dir, exist_ok=True)
-        os.makedirs(ori_output_dir, exist_ok=True)
-
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-
-        video_filename = os.path.join(output_dir, f"depth_video_{timestamp}.avi")
-        original_video_filename = os.path.join(ori_output_dir, f"original_video_{timestamp}.avi")
-        frame_width, frame_height = 640, 480
-        fourcc = cv2.VideoWriter_fourcc(*'XVID') 
-        self.fps =  30
-        self.frame_time = 1.0 / self.fps  # 計算每幀應該花費的時間
-        self.prev_time = time.time()
-        self.video_writer = cv2.VideoWriter(video_filename, fourcc, float(self.fps), (frame_width, frame_height))
-        self.out_original = cv2.VideoWriter(original_video_filename, fourcc, float(self.fps), (frame_width, frame_height))
-        self.get_logger().info(f"Video will be saved to {video_filename}")
 
     def timer_callback(self):
         msg = Int32MultiArray()
@@ -113,32 +139,11 @@ class PeopleTrackNode(Node):
 
         self.pub_track_data.publish(msg)
 
+    def color_callback(self, msg):
+        self.color_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
 
-    # def timer_callback(self):
-    #     msg = Int32MultiArray()
-    #     msg1 = Image()
-
-    #     if not self.has_detection:
-    #         self.locked_target = None
-    #         self.x1 = self.y1 = self.x2 = self.y2 = None
-    #         # self.depth_value = 0
-    #         msg.data = [0, 0, 0, 0, 0]
-    #         self.get_logger().info("[timer_callback] => NO DETECTION => state=0")
-    #     else:
-    #         if self.locked_target is None:
-    #             self.status = "UNLOCKED"
-    #             # self.depth_value = 0
-    #             msg.data = [0, 0, 0, 0]
-    #             self.get_logger().info("[timer_callback] => DETECT but UNLOCKED => state=0")
-    #         else:
-    #             self.status = "LOCKED"
-    #             # self.center_x = (self.x1 + self.x2)/2
-    #             msg.data = [int(self.x1), int(self.y1), int(self.x2), int(self.y2)]
-    #             msg1 = self.bridge.cv2_to_imgmsg(frame, encoding="bgr8")
-    #             self.get_logger().info( f"[timer_callback] => LOCKED => state=1")
-
-    #     self.pub_depth_data.publish(msg)
-    #     self.pub_image_data.publish(msg1)
+    def depth_callback(self, msg):
+        self.depth_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='16UC1')
 
     def get_center_depth(self, depth_image, x1, y1, x2, y2):
         if depth_image is None:
@@ -160,86 +165,69 @@ class PeopleTrackNode(Node):
             self.get_logger().info(f"Resetting device: {device.get_info(rs.camera_info.name)}")
             device.hardware_reset()
 
-    def video_save(self,depth_frame,frame):
-
-        current_time = time.time()
-        elapsed_time = current_time - self.prev_time
-        if elapsed_time < self.frame_time:
-            time.sleep(self.frame_time - elapsed_time)  # 控制 FPS 速率
-
-        depth_image = np.asanyarray(depth_frame.get_data())
-        #將深度值映射到可視化格式 （彩色影像）
-        depth_colormap = cv2.applyColorMap(
-            cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET
-        )
-        # 寫入影片
-        self.video_writer.write(depth_colormap)
-        self.out_original.write(frame)
-
-        # 顯示深度影像
-        cv2.imshow("Depth Stream", depth_colormap)
-
-
     def yolo_track(self):
-        a=0
         tracker = BYTETracker(self.tracker_args)
         msg = Int32MultiArray()
 
         use_realsense = False
         if self.tracker_args.realsense:
             use_realsense = True
-            pipeline = rs.pipeline()
-            config = rs.config()
-            config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
-            config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-            try:
-                pipeline.start(config)
-            except RuntimeError:
-                self.get_logger().info("[INFO] Pipeline failed to start -> reset RealSense device.")
-                self.reset_realsense_devices()
-                pipeline = rs.pipeline()
-                pipeline.start(config)
         elif self.tracker_args.video_path:
             cap = cv2.VideoCapture(self.tracker_args.video_path)
         else:
             cap = cv2.VideoCapture(0)
+        # fps counter
+        last_print_fps = 0
+        frame_count = 0
 
         while rclpy.ok():
+            if self.color_image is None:
+                continue
             if not rclpy.ok():
                 break
+            ## fps
+            if time.time() - last_print_fps >= 1.0:
+                self.get_logger().warn(f"Actual FPS: {frame_count}")
+                last_print_fps = time.time()
+                a = frame_count
+                frame_count = 0
+            frame_count += 1
+
+
+            frame = self.color_image.copy()
+            results = self.model(frame, verbose=True, device=0)
+            detections = results[0].boxes.xyxy
+            scores = results[0].boxes.conf
+            frame_count = 0
+            frame_count += 1
+            ## camera
             start_time = time.time()
-            
             if use_realsense:
-                frames = pipeline.wait_for_frames()
-                color_frame = frames.get_color_frame()
-                depth_frame = frames.get_depth_frame()
-                a=a+1 
-                print(a)
-                self.get_logger().info(f"a========{a}")
-                if not color_frame or not depth_frame:
-                    self.has_detection = False
+                if self.color_image is None:
                     continue
-                frame = np.asanyarray(color_frame.get_data())
-                depth_image = np.asanyarray(depth_frame.get_data())
-                self.video_save(depth_frame,frame)
+                frame = self.color_image.copy()
+                depth_image = self.depth_image.copy() if self.depth_image is not None else None
+
             else:
                 ret, frame = cap.read()
                 if not ret:
-                    self.get_logger().info("[INFO] Video ended or cannot grab frame.")
+                    self.get_logger().info("Video ended or cannot grab frame.")
                     self.has_detection = False
                     break
                 depth_image = None
-
-            self.prev_time = time.time()
-
+            self.get_logger().info(f"camera time: {int((time.time() - start_time)*1000)}")
+            ## inference
+            start_time = time.time()
             results = self.model(frame)
             detections = results[0].boxes.xyxy
             scores = results[0].boxes.conf
-
+            self.get_logger().info(f"inference time: {int((time.time() - start_time)*1000)}")
+            ## post process
+            start_time = time.time()
             if len(detections) == 0:
                 self.has_detection = False
                 cv2.imshow("YOLOv8 Tracking", frame)
-                if cv2.waitKey(int(1000 / self.fps)) & 0xFF == ord('q'):
+                if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
                 continue
             else:
@@ -252,6 +240,7 @@ class PeopleTrackNode(Node):
                 detections[:, 3].unsqueeze(1),
                 scores.unsqueeze(1),
             ], dim=1).cpu().numpy()
+            self.get_logger().info(f"post process time: {int((time.time() - start_time)*1000)}")
 
             img_h, img_w = frame.shape[:2]
             info_imgs = (img_h, img_w, 0)
@@ -260,7 +249,7 @@ class PeopleTrackNode(Node):
             if len(online_targets) == 0:
                 self.has_detection = False
                 cv2.imshow("YOLOv8 Tracking", frame)
-                if cv2.waitKey(int(1000 / self.fps)) & 0xFF == ord('q'):
+                if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
                 continue
 
@@ -280,8 +269,13 @@ class PeopleTrackNode(Node):
                         self.x1, self.y1 = ix, iy
                         self.x2, self.y2 = ix + iw, iy + ih
 
+                        cx = int((self.x1 + self.x2) / 2)
+                        cy = int((self.y1 + self.y2) / 2)
+
+                        output_msg = String()
+                        output_msg.data = f"person,{cx},{cy}"
+                        self.pub_ocr_results.publish(output_msg)
                         if use_realsense and depth_image is not None:
-                            # self.timer = self.create_timer(1.0, self.timer_callback)
                             depth_val = self.get_center_depth(depth_image, self.x1, self.y1, self.x2, self.y2)
                             self.depth_value = depth_val
                         else:
@@ -290,12 +284,16 @@ class PeopleTrackNode(Node):
                         cv2.rectangle(frame, (self.x1, self.y1), (self.x2, self.y2), (0, 0, 255), 2)
                         cv2.putText(frame, f"Locked ID: {track_id}", (self.x1, self.y1 - 10),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                        cv2.putText(frame, f"fps: {a}", (self.x1, self.y2 - 20) 
+                                    ,cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+
+                        self.publish_annotated_image(frame)
                         cv2.putText(frame, f"Depth: {self.depth_value}", (self.x1, self.y2 + 15),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
 
             cv2.imshow("YOLOv8 Tracking", frame)
 
-            key = cv2.waitKey(int(1000 / self.fps)) & 0xFF
+            key = cv2.waitKey(1) & 0xFF
             if key == ord('q'):
                 self.get_logger().info("[INFO] Press 'q' => Break main loop.")
                 break
@@ -335,18 +333,24 @@ class PeopleTrackNode(Node):
                         ix, iy, iw, ih = map(int, closest_target.tlwh)
                         self.x1, self.y1 = ix, iy
                         self.x2, self.y2 = ix + iw, iy + ih
-                        self.depth_value = 0
                         self.get_logger().info(f"[INFO] Locked target: ID={closest_target.track_id}")
 
+        cv2.destroyAllWindows()
+        self.get_logger().info("Tracking finished.")
+        self.depth_value = 0
+        self.get_logger().info(f"[INFO] Locked target: ID={closest_target.track_id}")
+
         if use_realsense:
-            pipeline.stop()
+            if self.subscription is not None:
+                self.destroy_subscription(self.color_callback)
+                self.destroy_subscription(self.depth_callback)
+                self.get_logger().info("RealSense subscription stopped.")
         else:
             cap.release()
 
         self.video_writer.release()
         cv2.destroyAllWindows()
         self.get_logger().info("Video saved successfully.")
-
 
 def main():
     args = make_parser().parse_args()

@@ -20,10 +20,11 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'YOLO = track.YOLO:main',
+            'ByteTrack = track.ByteTrack:main',
+            'depth = track.depth:main',
             'bytetrack = track.bytetrack:main',
             'test = track.test:main',
-            'track_point_sub = track.track_point_sub:main',
-            'trans_depth = track.depth:main'
         ],
     },
 )

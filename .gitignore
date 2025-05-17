@@ -1,0 +1,6 @@
+*.pyc
+path/to/large_file.pt
+*.pt
+*.onnx
+*.bag
+*.mp4
