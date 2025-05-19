@@ -1,35 +1,35 @@
-**RealSense 鏡頭影像發佈節點**
-本專案提供一個 ROS2 節點，負責從 Intel RealSense 鏡頭擷取彩色影像與深度影像，並將其發佈至 ROS 主題，以供其他模組使用。
--------------------------
-1.功能如下：
-從 RealSense 鏡頭擷取 RGB 影像與深度影像
-發佈影像至 ROS2 topic /camera/color（彩色影像）與 /camera/depth（深度影像）
-自動儲存錄製的影像影片（彩色與深度影像）
-記錄並顯示 FPS（每秒幀數）
-處理 RealSense 鏡頭的初始化與錯誤管理
+ROS 2 People Tracking System with YOLOv8, ByteTrack and Depth Mapping
+這是一個整合 YOLOv8 物件偵測、ByteTrack 多目標追蹤、RealSense 深度資訊轉換的 ROS 2 專案。適用於人員追蹤與 2D → 3D 位置估計等應用場景。
 
-2.環境需求如下：
-pyrealsense2（RealSense SDK）
-opencv-python（影像處理）
-cv_bridge（ROS 影像訊息轉換）
+📦 專案架構
+本系統包含三個主要 ROS2 node：
+YOLO.py：使用 TensorRT 加速的 YOLOv8 模型執行影像中的人員偵測。
+ByteTrack.py：將 YOLO 偵測結果進行多目標追蹤與鎖定功能，可手動鎖定 ID。
+depth.py：根據 RealSense 深度影像與追蹤結果估算 3D 座標。
 
-ros2 run track bytetrack --realsense
+📷 節點說明
+YOLOv8 節點（YOLO.py）
+訂閱：/camera/color（RGB 影像）
+發布：/track/yolo（格式為 x1,y1,x2,y2,conf;...）
+支援使用 .engine 模型進行 TensorRT 推論（需指定 MODEL_PATH）。
+
+ByteTrack 節點（ByteTrack.py）
+訂閱：
+/track/yolo：偵測結果
+/camera/color：RGB 影像（與 YOLO 共用）
+發布：
+/annotated_image：帶有追蹤框的影像
+/track/object：PoseArray 格式的人員 2D 中心點資訊
+功能：
+自動追蹤與手動鎖定 ID（按鍵 l 鎖定，r 重置）
+
+深度估算節點（depth.py）
+訂閱：
+/camera/depth：RealSense 深度影像
+/track/object：2D 平面位置（由 ByteTrack 發布）
+發布：
+/track/object_3d：3D PoseArray 結果
+使用 fx, fy, ppx, ppy 相機參數將 2D 位置對應至 3D 空間座標。
 
 
-
-**人物追蹤系統（YOLOv8 + ByteTrack + ROS2）**
-本專案使用 YOLOv8 物件偵測與 ByteTrack 多目標追蹤演算法，結合 Intel RealSense 深度相機，在 ROS2 環境下進行即時人物追蹤。
--------------------------
-1.功能如下：
-YOLOv8 目標偵測：偵測畫面中的人員
-ByteTrack 目標追蹤：追蹤不同 ID 的目標
-ROS2 訂閱與發佈：從 RealSense 讀取影像並發佈追蹤結果 /people_track
-深度資訊計算：透過深度相機取得目標物的距離
-視覺化顯示：在畫面上標記追蹤的對象與 ID
-
-ros2 run track open_rs
-
-![image](https://github.com/user-attachments/assets/429db481-6f6d-4282-8508-e97589ff2f03)
-
-建議先開bytetracky再開open_rs，因為open_rs開啟後即會儲存鏡頭讀取之影片。
 
